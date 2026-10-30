@@ -1409,7 +1409,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 child: Text(
-                  '[المستوى الأول]',
+                  '',
                   style: TextStyle(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w800,

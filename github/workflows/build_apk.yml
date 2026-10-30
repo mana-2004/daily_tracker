@@ -1,10 +1,11 @@
-name: Build APK and Deploy Web
+name: Build Flutter App & Web
 
 on:
   push:
     branches: [ "main" ]
   workflow_dispatch:
 
+# إعطاء الصلاحيات اللازمة للسيرفر لنشر الموقع وإنشاء الـ Release
 permissions:
   contents: write
   pages: write
@@ -15,15 +16,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # 1. بناء تطبيق الأندرويد واستخراج الـ APK
-  build-apk:
+  # المهمة الأولى: بناء تطبيق الأندرويد واستخراج الـ APK
+  android-build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -33,32 +34,26 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Create Android Structure
+      - name: Create Android Scaffolding
         run: flutter create . --project-name daily_tracker --platforms android
 
-      - name: Get Dependencies
+      - name: Install Packages
         run: flutter pub get
 
-      - name: Build APK
+      - name: Build Release APK
         run: flutter build apk --release
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: DailyTracker-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
-
-      - name: Create Release
+      - name: Publish Android Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.0
-          name: "الإصدار v1.0.0"
+          name: "Daily Tracker v1.0.0"
           files: build/app/outputs/flutter-apk/app-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # 2. بناء نسخة الويب ونشرها على GitHub Pages
-  build-and-deploy-web:
+  # المهمة الثانية: تجميع نفس كود Flutter لموقع ويب ونشره مباشرة
+  web-deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -72,19 +67,19 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Create Web Structure
+      - name: Create Web Scaffolding
         run: flutter create . --project-name daily_tracker --platforms web
 
-      - name: Get Dependencies
+      - name: Install Packages
         run: flutter pub get
 
-      - name: Build Flutter Web
+      - name: Build Web App
         run: flutter build web --release --base-href "/daily_tracker/"
 
-      - name: Setup Pages
+      - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload Pages Artifact
+      - name: Upload Web Artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: 'build/web'
